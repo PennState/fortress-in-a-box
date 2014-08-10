@@ -1,0 +1,11 @@
+---
+# file: fortress.yml
+
+- hosts: fortress
+  sudo: yes
+  roles:
+    - base
+    - java
+#    - ldap
+#    - fortress
+
