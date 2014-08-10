@@ -1,0 +1,17 @@
+---
+# File: roles/base/tasks/main.yml
+
+- name: install basic tools and utilities
+  yum: name={{ item }} state=latest
+  with_items:
+    - curl
+    - bind-utils
+    - tree
+    - unzip
+    - zip
+
+- name: turn off the IPv4 firewall
+  service: name=iptables state=stopped
+
+- name: turn off the IPv6 firewall
+  service: name=ip6tables state=stopped
