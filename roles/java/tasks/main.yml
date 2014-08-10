@@ -1,0 +1,7 @@
+---
+# File: roles/java/tasks/main.yml
+
+- name: install openjdk 7
+  yum: name={{ item }} state=latest
+  with_items:
+    - java-1.7.0-openjdk
