@@ -1,1 +1,5 @@
 /.project
+/.vagrant/
+/ansible_inventory.ini
+/Vagrantfile
+/vagrant_ansible_inventory_default
