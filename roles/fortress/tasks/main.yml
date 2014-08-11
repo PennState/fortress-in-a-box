@@ -1,0 +1,46 @@
+---
+# file: roles/fortress/tasks/main.yml
+#
+# This playbook follows the instructions provided at:
+#
+#    http://www.jts.us/iamfortress/guides/README-QUICKSTART.html?_ga=1.250374083.476753609.1407756859
+#
+
+
+- name: verify that the fortress version has been specified
+  fail: msg="The Fortress version must be specified in 'fortress_version'."
+  when: fortress_version is not defined
+  
+- name: create the fortress directory
+  file: path={{ fortress_home }} state=directory
+ 
+- name: create the fortress group
+  group: name={{ fortress_group }} state=present
+
+- name: create the fortress user
+  user: name={{ fortress_user }} group={{ fortress_group }} state=present
+        createhome=no home={{ fortress_home }}
+
+ # Section I
+        
+- name: download the fortress builder archive (IA & IB)
+  get_url: url={{ fortress_download_url }} dest=~
+
+- name: unzip the fortress builder archive (step IC)
+  shell: chdir={{ fortress_home }} creates={{ fortress_home }}/b.sh
+         unzip ~/{{ fortress_file }}
+
+- name: make the appropriate files executable (step I-C)
+  file: path={{ item }} mode=0755 state=file
+  with_items:
+    - "{{ fortress_home }}/b.sh"
+    - "{{ fortress_home }}/apache-ant/bin/ant"
+
+#- name: enable execution of the build script and ant (ID)
+#  shell: chmod a+x -Rf {{ fortress_home }}/*
+
+- name: clear the sudo password in the build properties (step IE)
+  lineinfile: dest={{ fortress_home }}/build.properties
+              regexp="^#? *sudo.pw=" line="sudo.pw=" state=present
+
+  
