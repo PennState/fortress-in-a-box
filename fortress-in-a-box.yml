@@ -6,6 +6,6 @@
   roles:
     - base
     - java
-#    - ldap
-#    - fortress
+    - ldap
+    - fortress
 
