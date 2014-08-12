@@ -55,5 +55,35 @@
   command: chdir={{ fortress_home }} ./b.sh dist
            creates={{ fortress_home }}/dist/fortress-{{ fortress_version }}.jar
 
+# Section III - install, configure and load OpenLDAP with seed data
 
+- name: disable the manager implementation (III-A)
+  lineinfile: dest={{ fortress_home }}/build.properties state=present
+              regexp="enable\.mgr\.impl" line="#enable.mgr.impl=true"
+
+- name: install Symas OpenLDAP, configure and load with seed data (III-B)
+  command: chdir={{ fortress_home }} ./b.sh init-slapd
+           creates=/etc/init.d/solserver
+
+- name: copy the default Symas OpenLDAP configuration
+  command: cp -f /opt/symas/etc/openldap/symas-openldap.conf.default
+                 /opt/symas/etc/openldap/symas-openldap.conf 
+           
+- name: set up the correct runlevels for Symas OpenLDAP server on boot up
+  command: chkconfig --level 2345 solserver on
+           creates=/etc/rc2.d/S60solserver
+
+- name: start the Symas OpenLDAP server (if it's not already running)
+  service: name=solserver state=started
   
+- name: wait until Symas OpenLDAP server has started
+  wait_for: host=localhost port=389 delay=5 state=started timeout=300
+  
+# Section IV - integration test Fortress and OpenLDAP
+
+- name: run the Fortress and Symas OpenLDAP regression tests (IV-A & IV-B)
+  command: chdir={{ fortress_home }} ./b.sh test-full
+  tags:
+    - regression_fortress
+    - regression_all
+
