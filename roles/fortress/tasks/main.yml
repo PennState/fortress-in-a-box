@@ -87,3 +87,21 @@
     - regression_fortress
     - regression_all
 
+# Section V - Commander Web Administration demo
+
+- name: install commander (V)
+  command: chdir={{ fortress_home }} ./b.sh install-commander-demo
+           creates={{ fortress_home }}/commander-{{ fortress_version }}/target/commander-{{ fortress_version }}.jar
+  tags:
+    - commander
+
+
+# Section VI - integration test Commander with Selenium
+
+- name: run the Commander regression tests (VI)
+  command: chdir={{ fortress_home }} ./b.sh commander-maven-test
+  tags:
+    - regression_commander
+    - regression_all
+
+# Section VII - connecting to Commander via Web browser
