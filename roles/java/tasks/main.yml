@@ -5,3 +5,4 @@
   yum: name={{ item }} state=latest
   with_items:
     - java-1.7.0-openjdk
+    - java-1.7.0-openjdk-devel
