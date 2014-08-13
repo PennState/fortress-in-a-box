@@ -92,9 +92,11 @@
 - name: install commander (V)
   command: chdir={{ fortress_home }} ./b.sh install-commander-demo
            creates={{ fortress_home }}/commander-{{ fortress_version }}/target/commander-{{ fortress_version }}.jar
-  tags:
-    - commander
+#  tags:
+#    - commander
 
+- name: start commander (and sentry) using embedded tomcat server
+  command: chdir={{ fortress_home }} ./b.sh sentry-ant-start-tomcat
 
 # Section VI - integration test Commander with Selenium
 

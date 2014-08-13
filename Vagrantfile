@@ -16,9 +16,9 @@ Vagrant.configure("2") do |config|
     ansible.extra_vars = {
       fortress_version: "1.0-RC39"
     }
-#    ansible.tags = [
-#      "commander"
-#    ]
+ #   ansible.tags = [
+ #     "commander"
+ #   ]
     ansible.skip_tags = [
       "regression_commander",
       "regression_fortress"
