@@ -24,7 +24,7 @@
  # Section I - download Fortress QUICKSTART and prepare the package
         
 - name: download the fortress builder archive (I-A & I-B)
-  get_url: url={{ fortress_download_url }} dest=~
+  get_url: url={{ fortress_download_url }} dest=~/{{ fortress_file }}
 
 - name: unzip the fortress builder archive (I-C)
   shell: chdir={{ fortress_home }} creates={{ fortress_home }}/b.sh
@@ -68,6 +68,24 @@
 - name: copy the default Symas OpenLDAP configuration
   command: cp -f /opt/symas/etc/openldap/symas-openldap.conf.default
                  /opt/symas/etc/openldap/symas-openldap.conf 
+                 
+- name: configure the correct pid file location
+  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
+              regexp="^pidfile"
+              line="pidfile                 /var/symas/run/slapd.pid"
+
+- name: configure the correct pid file location
+  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
+              regexp="^argsfile"
+              line="argsfile                 /var/symas/run/slapd.args"
+           
+- name: configure syslog
+  lineinfile: dest=/etc/rsyslog.conf state=present 
+              regexp="^local4.debug"
+              line="local4.debug                    /var/log/slapd.log"
+              insertbefore="\# \#\#\# begin forwarding rule \#\#\#"
+  notify:
+    - restart rsyslog
            
 - name: set up the correct runlevels for Symas OpenLDAP server on boot up
   command: chkconfig --level 2345 solserver on
