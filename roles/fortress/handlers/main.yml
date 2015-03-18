@@ -1,0 +1,5 @@
+---
+# file: roles/fortress/handlers/main.yml
+
+- name: restart rsyslog
+  service: name=rsyslog state=restarted
