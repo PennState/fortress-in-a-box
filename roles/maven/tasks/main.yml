@@ -1,0 +1,16 @@
+---
+# file: roles/maven/tasks/main.yml
+
+- name: get the latest version of Maven
+  get_url: url=http://apache.mesi.com.ar/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz
+           dest=~/apache-maven-{{ maven_version }}-bin.tar.gz
+ 
+- name: unpackage the archive
+  command: chdir=~ tar -xzf apache-maven-{{ maven_version }}-bin.tar.gz -C /usr/local
+  
+- name: create a pretty link to the real package contents
+  file: src=/usr/local/apache-maven-{{ maven_version }} path=/usr/local/maven state=link
+  
+- name: add Maven to the environment
+  copy: src=../files/maven.sh dest=/etc/profile.d/maven.sh owner=root group=root mode=0644
+  

@@ -1,0 +1,4 @@
+---
+# file: roles/maven/vars/main.yml
+
+maven_version: "3.1.1"

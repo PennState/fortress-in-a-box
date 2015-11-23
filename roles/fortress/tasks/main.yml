@@ -1,127 +1,48 @@
 ---
 # file: roles/fortress/tasks/main.yml
 #
-# This playbook follows the instructions provided at:
-#
-#    http://www.jts.us/iamfortress/guides/README-QUICKSTART.html?_ga=1.250374083.476753609.1407756859
+# This script is based on ten minute guide (http://directory.apache.org/fortress/gen-docs/latest/apidocs/org/apache/directory/fortress/core/doc-files/ten-minute-guide.html)
 #
 
+# Section II - Fortress core setup and install
 
-- name: verify that the fortress version has been specified
-  fail: msg="The Fortress version must be specified in 'fortress_version'."
-  when: fortress_version is not defined
-  
-- name: create the fortress directory
-  file: path={{ fortress_home }} state=directory
- 
-- name: create the fortress group
-  group: name={{ fortress_group }} state=present
+- name: copy build.properties
+  command: chdir={{ fortress_core }} cp build.properties.example build.properties
 
-- name: create the fortress user
-  user: name={{ fortress_user }} group={{ fortress_group }} state=present
-        createhome=no home={{ fortress_home }}
+- name: install fortress core with maven
+  shell: chdir={{ fortress_core }} /usr/local/maven/bin/mvn clean install
 
- # Section I - download Fortress QUICKSTART and prepare the package
-        
-- name: download the fortress builder archive (I-A & I-B)
-  get_url: url={{ fortress_download_url }} dest=~/{{ fortress_file }}
+- name: load fortress data (refreshLDAPData.xml)
+  command: chdir={{ fortress_core }} /usr/local/maven/bin/mvn install -Dload.file=./ldap/setup/refreshLDAPData.xml
 
-- name: unzip the fortress builder archive (I-C)
-  shell: chdir={{ fortress_home }} creates={{ fortress_home }}/b.sh
-         unzip ~/{{ fortress_file }}
+- name: load fortress data (DelegatedAdminManagerLoad.xml)
+  command: chdir={{ fortress_core }} /usr/local/maven/bin/mvn install -Dload.file=./ldap/setup/DelegatedAdminManagerLoad.xml
 
-- name: make the appropriate files executable (I-D)
-  file: path={{ item }} mode=0755 state=file
-  with_items:
-    - "{{ fortress_home }}/b.sh"
-    - "{{ fortress_home }}/apache-ant/bin/ant"
+# Section III - Fortress realm install
 
-- name: clear the sudo password in the build properties (I-E)
-  lineinfile: dest={{ fortress_home }}/build.properties
-              regexp="^#? *sudo.pw=" line="sudo.pw=" state=present
+- name: install fortress realm with maven
+  command: chdir={{ fortress_realm }} /usr/local/maven/bin/mvn clean install
 
-# Section II - compile Fortress source and build distribution packages
+- name: move realm jar to tomcat
+  shell: chdir={{ fortress_realm }}/proxy/target cp *.jar /usr/share/tomcat/lib
 
-- name: set JAVA_HOME in b.sh (II-A) # TODO - Set up using alternatives?
-  lineinfile: dest=/opt/fortress/b.sh state=present
-              regexp="^export JAVA_HOME=" line="export JAVA_HOME=/usr/lib/jvm/java-openjdk"
-              
-- name: set a default language for the java compiler
-  lineinfile: dest={{ fortress_home }}/b.sh state=present
-              regexp="^export LANG" line="export LANG=en_US.UTF-8"
-              insertafter="^export JAVA_HOME"
+# Section IV - Fortress commander install
 
-- name: run the distribution target (II-B & II-C)
-  command: chdir={{ fortress_home }} ./b.sh dist
-           creates={{ fortress_home }}/dist/fortress-{{ fortress_version }}.jar
+- name: copy fortress.properties into commander
+  command: cp {{ fortress_core }}/config/fortress.properties  {{ fortress_commander }}/src/main/resources
 
-# Section III - install, configure and load OpenLDAP with seed data
+- name: load policies for testing
+  command: chdir={{ fortress_commander }} /usr/local/maven/bin/mvn install -Dload.file=./src/main/resources/FortressWebDemoUsers.xml
 
-- name: disable the manager implementation (III-A)
-  lineinfile: dest={{ fortress_home }}/build.properties state=present
-              regexp="enable\.mgr\.impl" line="#enable.mgr.impl=true"
+- name: load tomcat users
+  lineinfile: dest=/usr/share/tomcat/conf/tomcat-users.xml state=present
+              line="<role rolename=\"manager-script\"/><role rolename=\"manager-gui\"/><user username=\"tcmanager\" password=\"m@nager123\" roles=\"manager-script\"/><user username=\"tcmanagergui\" password=\"m@nager123\" roles=\"manager-gui\"/>"
+              insertbefore="</tomcat-users>"
 
-- name: install Symas OpenLDAP, configure and load with seed data (III-B)
-  command: chdir={{ fortress_home }} ./b.sh init-slapd
-           creates=/etc/init.d/solserver
+- name: restart tomcat
+  service: name=tomcat state=restarted
 
-- name: copy the default Symas OpenLDAP configuration
-  command: cp -f /opt/symas/etc/openldap/symas-openldap.conf.default
-                 /opt/symas/etc/openldap/symas-openldap.conf 
-                 
-- name: configure the correct pid file location
-  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
-              regexp="^pidfile"
-              line="pidfile                 /var/symas/run/slapd.pid"
+- name: deploy fortress web to tomcat
+  command: chdir={{ fortress_commander }} /usr/local/maven/bin/mvn tomcat:deploy
 
-- name: configure the correct pid file location
-  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
-              regexp="^argsfile"
-              line="argsfile                 /var/symas/run/slapd.args"
-           
-- name: configure syslog
-  lineinfile: dest=/etc/rsyslog.conf state=present 
-              regexp="^local4.debug"
-              line="local4.debug                    /var/log/slapd.log"
-              insertbefore="\# \#\#\# begin forwarding rule \#\#\#"
-  notify:
-    - restart rsyslog
-           
-- name: set up the correct runlevels for Symas OpenLDAP server on boot up
-  command: chkconfig --level 2345 solserver on
-           creates=/etc/rc2.d/S60solserver
-
-- name: start the Symas OpenLDAP server (if it's not already running)
-  service: name=solserver state=started
-  
-- name: wait until Symas OpenLDAP server has started
-  wait_for: host=localhost port=389 delay=5 state=started timeout=300
-  
-# Section IV - integration test Fortress and OpenLDAP
-
-- name: run the Fortress and Symas OpenLDAP regression tests (IV-A & IV-B)
-  command: chdir={{ fortress_home }} ./b.sh test-full
-  tags:
-    - regression_fortress
-    - regression_all
-
-# Section V - Commander Web Administration demo
-
-- name: install commander (V)
-  command: chdir={{ fortress_home }} ./b.sh install-commander-demo
-           creates={{ fortress_home }}/commander-{{ fortress_version }}/target/commander-{{ fortress_version }}.jar
-#  tags:
-#    - commander
-
-- name: start commander (and sentry) using embedded tomcat server
-  command: chdir={{ fortress_home }} ./b.sh sentry-ant-start-tomcat
-
-# Section VI - integration test Commander with Selenium
-
-- name: run the Commander regression tests (VI)
-  command: chdir={{ fortress_home }} ./b.sh commander-maven-test
-  tags:
-    - regression_commander
-    - regression_all
-
-# Section VII - connecting to Commander via Web browser
+# Section V - Fortress enmasse (REST service) install

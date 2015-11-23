@@ -1,0 +1,10 @@
+---
+# File: roles/fortress-source/vars/main.yml
+
+fortress_home: "/opt/fortress"
+fortress_core: "{{ fortress_home }}/directory-fortress-core"
+fortress_realm: "{{ fortress_home }}/directory-fortress-realm"
+fortress_commander: "{{ fortress_home }}/directory-fortress-commander"
+fortress_enmasse: "{{ fortress_home }}/directory-fortress-enamsse"
+
+fortress_git_version: "HEAD"

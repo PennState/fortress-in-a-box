@@ -1,0 +1,36 @@
+---
+# file: roles/apacheds/tasks/main.yml
+
+- name: check if apacheds service already exists
+  stat: path=/etc/init.d/apacheds-2.0.0_M20-default
+  register: apache_dsservice_status
+
+- name: download apacheds if not exists
+  get_url: url=http://apache.go-parts.com//directory/apacheds/dist/2.0.0-M20/apacheds-2.0.0-M20-i386.rpm dest=/opt/apacheds.rpm
+  when: not apache_dsservice_status.stat.exists
+
+- name: install apacheds if not exists
+  shell: chdir=/opt rpm -iUvh --force apacheds.rpm
+  when: not apache_dsservice_status.stat.exists
+
+- name: set java location in apacheds wrapper
+  lineinfile: dest=/opt/apacheds-2.0.0_M20/conf/wrapper.conf state=present
+              regexp="# wrapper.java.command" line="wrapper.java.command=/usr/lib/jvm/java-openjdk/bin/java"
+
+- name: fix lock file name in apacheds start script
+  lineinfile: dest=/opt/apacheds-2.0.0_M20/bin/apacheds state=present
+              regexp="LOCKFILE=" line="LOCKFILE=\"$LOCKDIR/apacheds-2.0.0_M20-default\""
+
+- name: restart apache ds
+  shell: service apacheds-2.0.0_M20-default restart
+
+- name: turn apache ds service on
+  shell: chkconfig apacheds-2.0.0_M20-default on
+
+- name: wait until ApacheDS server has started
+  wait_for: host=localhost port=10389 delay=5 state=started timeout=300
+
+#TODO: figure out how to do this mutliple times without ignoring errors
+- name: load apacheds-fortress.ldif to apacheds
+  shell: ldapmodify -h localhost -p 10389 -D "uid=admin,ou=system" -w "secret" -a -f {{ fortress_core }}/ldap/schema/apacheds-fortress.ldif
+  ignore_errors: yes

@@ -9,9 +9,20 @@
     - tree
     - unzip
     - zip
+    - git
+
+# git has trouble connecting to some ssl protected repos with version of nss installed
+- name: install/update nss
+  yum: name=nss state=latest
 
 - name: turn off the IPv4 firewall
   service: name=iptables state=stopped
+  
+- name: remove the IPv4 firewall startup script with chkconfig
+  shell: chkconfig iptables off creates=/etc/rc5.d/K92iptables
 
 - name: turn off the IPv6 firewall
   service: name=ip6tables state=stopped
+  
+- name: remove the IPv6 firewall startup script with chkconfig
+  shell: chkconfig ip6tables off creates=/etc/rc5.d/K92ip6tableslatest

@@ -6,6 +6,10 @@
   roles:
     - base
     - java
-    - ldap
+    - ldap-tools
+    - fortress-source
+    - apacheds
+#   - openldap
+    - maven
+    - tomcat
     - fortress
-
