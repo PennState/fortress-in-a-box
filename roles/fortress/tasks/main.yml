@@ -50,13 +50,13 @@
 - name: copy fortress.properties
   command: cp {{ fortress_core }}/config/fortress.properties {{ fortress_enmasse }}/src/main/resources
 
-- name: load policies for testing
-  command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn install -Dload.file=./src/main/resources/FortressRestServerPolicy.xml
-
 - name: turn off doclint to get past javadoc error in java 1.8
   lineinfile: dest={{ fortress_enmasse }}/pom.xml state=present
-              line="<plugin><artifactId>maven-javadoc-plugin</artifactId><configuration><additionalparam>-Xdoclint:none</additionalparam></configuration></plugin>"
-              insertbefore="</plugins>"
+              line="<additionalparam>-Xdoclint:none</additionalparam>"
+              regexp="<!--<additionalparam>-Xdoclint:none<\/additionalparam>-->"
+
+- name: load policies for testing
+  command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn install -Dload.file=./src/main/resources/FortressRestServerPolicy.xml
 
 - name: deploy fortress enmasse to tomcat
   command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn tomcat:redeploy
