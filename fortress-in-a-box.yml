@@ -8,8 +8,8 @@
     - java
     - ldap-tools
     - fortress-source
-    - apacheds
-#   - openldap
+#    - apacheds
+    - openldap
     - maven
     - tomcat
     - fortress
