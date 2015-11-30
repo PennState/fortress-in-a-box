@@ -1,0 +1,13 @@
+---
+# file: fortress.yml
+
+- hosts: all
+  sudo: yes
+  roles:
+    - { role: base, disable_firewall: false }
+    - java
+    - maven
+    - ldap-tools
+    - { role: fortress-source, ldap_type: openldap }
+    - openldap
+    - fortress

@@ -1,0 +1,8 @@
+ldap:
+  image: fortress/openldap
+web:
+  image: fortress/tomcat
+  ports:
+     - "8080:8080"
+  links:
+    - ldap
