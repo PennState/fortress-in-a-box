@@ -1,0 +1,21 @@
+---
+# file: roles/fortress-tomcat/tasks/main.yml
+
+- name: move realm jar to tomcat
+  shell: chdir={{ fortress_realm }}/proxy/target cp *.jar /usr/share/tomcat/lib
+
+- name: load tomcat users
+  lineinfile: dest=/usr/share/tomcat/conf/tomcat-users.xml state=present
+              line="<role rolename=\"manager-script\"/><role rolename=\"manager-gui\"/><user username=\"tcmanager\" password=\"m@nager123\" roles=\"manager-script\"/><user username=\"tcmanagergui\" password=\"m@nager123\" roles=\"manager-gui\"/>"
+              insertbefore="</tomcat-users>"
+
+- name: restart tomcat
+  service: name=tomcat state=restarted
+
+- name: deploy fortress web to tomcat
+  command: chdir={{ fortress_commander }} /usr/local/maven/bin/mvn tomcat:redeploy -fn
+
+- name: deploy fortress enmasse to tomcat
+  command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn tomcat:redeploy -fn
+
+

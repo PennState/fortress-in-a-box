@@ -1,0 +1,76 @@
+---
+# file: roles/openldap/tasks/main.yml
+
+# Install RPM
+
+- name: copy Symas OpenLDAP rpm
+  copy: src=../files/symas-openldap-silver.x86_64-2.4.42-2.rpm dest=~
+
+- name: install Symas OpenLDAP rpm
+  command: rpm -iUvh --force ~/symas-openldap-silver.x86_64-2.4.42-2.rpm
+
+# copy cert files
+
+- name: copy ca-cert file
+  command: cp {{ fortress_core }}/src/test/resources/certs/ca-cert.pem /opt/symas/ssl
+
+- name: copy server-cert file
+  command: cp {{ fortress_core }}/src/test/resources/certs/server-cert.pem /opt/symas/ssl
+
+- name: copy server key file
+  command: cp {{ fortress_core }}/src/test/resources/certs/server-key.pem /opt/symas/ssl
+
+# copy openldap config file
+
+- name: copy the default Symas OpenLDAP configuration
+  copy: src=symas-openldap.conf dest=/opt/symas/etc/openldap/symas-openldap.conf 
+
+- name: copy the default Symas slapd configuration
+  copy: src=slapd.conf dest=/opt/symas/etc/openldap/slapd.conf 
+  
+# copy openldap schema file
+
+- name: copy fortress.schema key file
+  command: cp {{ fortress_core }}/ldap/schema/fortress.schema /opt/symas/etc/openldap/schema
+
+- name: copy rbac.schema key file
+  command: cp {{ fortress_core }}/ldap/schema/rbac.schema /opt/symas/etc/openldap/schema
+
+# create db directories
+
+- name: create fortress data directory
+  file: path=/var/symas/openldap-data/fortress state=directory
+
+- name: create fortress history data directory
+  file: path=/var/symas/openldap-data/fortress.hist state=directory
+
+#open ldap additional config
+               
+- name: configure the correct pid file location
+  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
+              regexp="^pidfile"
+              line="pidfile                 /var/symas/run/slapd.pid"
+
+- name: configure the correct pid file location
+  lineinfile: dest=/opt/symas/etc/openldap/slapd.conf state=present
+              regexp="^argsfile"
+              line="argsfile                 /var/symas/run/slapd.args"
+           
+- name: configure syslog
+  lineinfile: dest=/etc/rsyslog.conf state=present 
+              regexp="^local4.debug"
+              line="local4.debug                    /var/log/slapd.log"
+              insertbefore="\# \#\#\# begin forwarding rule \#\#\#"
+  notify:
+    - restart rsyslog
+           
+- name: set up the correct runlevels for Symas OpenLDAP server on boot up
+  command: chkconfig --level 2345 solserver on
+           creates=/etc/rc2.d/S60solserver
+
+- name: start the Symas OpenLDAP server (if it's not already running)
+  service: name=solserver state=started
+  
+- name: wait until Symas OpenLDAP server has started
+  wait_for: host=localhost port=389 delay=5 state=started timeout=300
+

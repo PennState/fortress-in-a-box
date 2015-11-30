@@ -6,6 +6,11 @@
   roles:
     - base
     - java
-    - ldap
+    - maven
+    - ldap-tools
+    - { role: fortress-source, ldap_type: openldap }
+#    - apacheds
+    - openldap
     - fortress
-
+    - tomcat
+    - fortress-tomcat
