@@ -1,0 +1,4 @@
+---
+# File: roles/base/vars/main.yml
+
+disable_firewall: true

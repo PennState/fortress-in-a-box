@@ -4,7 +4,7 @@
 - name: get the latest version of Maven
   get_url: url=http://apache.mesi.com.ar/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz
            dest=~/apache-maven-{{ maven_version }}-bin.tar.gz
- 
+
 - name: unpackage the archive
   command: chdir=~ tar -xzf apache-maven-{{ maven_version }}-bin.tar.gz -C /usr/local
   

@@ -6,3 +6,7 @@
   with_items:
     - java-1.8.0-openjdk
     - java-1.8.0-openjdk-devel
+
+
+- name: set JAVA_HOME
+  lineinfile: dest=/etc/environment line=JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk.x86_64

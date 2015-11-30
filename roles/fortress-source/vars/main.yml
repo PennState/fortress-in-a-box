@@ -8,3 +8,6 @@ fortress_commander: "{{ fortress_home }}/directory-fortress-commander"
 fortress_enmasse: "{{ fortress_home }}/directory-fortress-enmasse"
 
 fortress_git_version: "HEAD"
+
+ldap_type: "apacheds"
+ldap_host: "localhost"

@@ -1,0 +1,4 @@
+---
+# File: roles/fortress/vars/main.yml
+
+load_test_policies: true

@@ -12,6 +12,28 @@
 - name: git clone fortress core repo
   git: dest={{ fortress_home }}/directory-fortress-core repo=https://git-wip-us.apache.org/repos/asf/directory-fortress-core.git force=yes version={{ fortress_git_version }}
 
+# fix fortress properties
+
+- name: set server type in build.properties.example
+  lineinfile: dest={{ fortress_core }}/build.properties.example state=present
+              regexp="ldap\.server\.type" line="ldap.server.type=openldap"
+  when: ldap_type == "openldap"
+
+- name: set port in build.properties.example
+  lineinfile: dest={{ fortress_core }}/build.properties.example state=present
+              regexp="ldap\.port" line="ldap.port=389"
+  when: ldap_type == "openldap"
+
+- name: set root user in build.properties.example
+  lineinfile: dest={{ fortress_core }}/build.properties.example state=present
+              regexp="root\.dn" line="root.dn=cn=Manager,dc=example,dc=com"
+  when: ldap_type == "openldap"
+
+- name: set host in build.properties.example
+  lineinfile: dest={{ fortress_core }}/build.properties.example state=present
+              regexp="ldap\.host" line="ldap.host={{ ldap_host }}"
+
+
 - name: git clone fortress realm repo
   git: dest={{ fortress_home }}/directory-fortress-realm repo=https://git-wip-us.apache.org/repos/asf/directory-fortress-realm.git force=yes version={{ fortress_git_version }}
 

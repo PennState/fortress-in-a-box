@@ -23,9 +23,6 @@
 - name: install fortress realm with maven
   command: chdir={{ fortress_realm }} /usr/local/maven/bin/mvn clean install
 
-- name: move realm jar to tomcat
-  shell: chdir={{ fortress_realm }}/proxy/target cp *.jar /usr/share/tomcat/lib
-
 # Section III - Fortress commander install
 
 - name: copy fortress.properties into commander
@@ -33,17 +30,7 @@
 
 - name: load policies for testing
   command: chdir={{ fortress_commander }} /usr/local/maven/bin/mvn install -Dload.file=./src/main/resources/FortressWebDemoUsers.xml
-
-- name: load tomcat users
-  lineinfile: dest=/usr/share/tomcat/conf/tomcat-users.xml state=present
-              line="<role rolename=\"manager-script\"/><role rolename=\"manager-gui\"/><user username=\"tcmanager\" password=\"m@nager123\" roles=\"manager-script\"/><user username=\"tcmanagergui\" password=\"m@nager123\" roles=\"manager-gui\"/>"
-              insertbefore="</tomcat-users>"
-
-- name: restart tomcat
-  service: name=tomcat state=restarted
-
-- name: deploy fortress web to tomcat
-  command: chdir={{ fortress_commander }} /usr/local/maven/bin/mvn tomcat:redeploy
+  when: load_test_policies
 
 # Section IV - Fortress enmasse (REST service) install
 
@@ -57,8 +44,6 @@
 
 - name: load policies for testing
   command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn install -Dload.file=./src/main/resources/FortressRestServerPolicy.xml
-
-- name: deploy fortress enmasse to tomcat
-  command: chdir={{ fortress_enmasse }} /usr/local/maven/bin/mvn tomcat:redeploy
+  when: load_test_policies
 
 
