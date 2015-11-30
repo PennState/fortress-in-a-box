@@ -8,7 +8,7 @@
     - java
     - maven
     - ldap-tools
-    - fortress-source
+    - { role: fortress-source, ldap_type: openldap }
 #    - apacheds
     - openldap
     - fortress
