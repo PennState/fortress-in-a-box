@@ -1,0 +1,15 @@
+FROM williamyeh/ansible:centos6
+
+# Add your playbooks to the Docker image
+ADD . /tmp
+WORKDIR /tmp
+
+RUN yum -y install rsyslog
+
+# Execute Ansible with your playbook's primary entry point.
+# The "-c local" argument causes Ansible to use a "local connection" that won't attempt to
+# ssh in to localhost.
+RUN ansible-playbook fortress-openldap.yml -c local --sudo
+
+EXPOSE 389
+CMD ["/etc/init.d/solserver", "start", "-d", "stats"]
