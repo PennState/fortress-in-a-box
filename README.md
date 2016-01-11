@@ -31,7 +31,7 @@ Tomcat Notes
 Docker (with openldap store)
 
 - The provided scripts can be used to build an openldap and a tomcat image, run the following commands
-  - docker build -f Dockerfile_openldap -t fortress/openldap
+  - docker build -f Dockerfile_openldap -t fortress/openldap .
   - docker build -f Dockerfile_tomcat -t fortress/tomcat .
 - The docker-compose.yml file create two containers from the built images.
   - Run "docker-compose up"
